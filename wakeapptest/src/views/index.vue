@@ -9,18 +9,18 @@
         <p class="title">Фильтр:</p>
 
         <div class="grid">
-          <label for="all" @click="filter(null)">
-            <input type="radio" value="value1" name="group2" id="all" checked>
+          <label for="allFilter" @click="filter(null)">
+            <input type="radio" value="all" name="group1" id="allFilter" checked>
             <p>All</p>
           </label>
 
           <label for="male" @click="filter('Male')">
-            <input type="radio" value="value2" name="group2" id="male">
+            <input type="radio" value="Male" name="group1" id="male">
             <p>Only Male</p>
           </label>
 
           <label for="female" @click="filter('Female')">
-            <input type="radio" value="value1" name="group2" id="female">
+            <input type="radio" value="Female" name="group1" id="female">
             <p>Only Female</p>
           </label>
         </div>
@@ -33,12 +33,12 @@
 
         <div class="grid">
           <label for="null-sort" @click="sorting(null)">
-            <input type="radio" value="value1" name="group2" id="null-sort" checked>
-            <p>All</p>
+            <input type="radio" value="all" name="group2" id="null-sort" v-model="sortInput">
+            <p>Default</p>
           </label>
 
           <label for="alphabetic" @click="sorting('alphabetic')">
-            <input type="radio" value="value2" name="group2" id="alphabetic">
+            <input type="radio" value="alphabetic" name="group2" id="alphabetic" v-model="sortInput">
             <p>Alphabetic</p>
           </label>
         </div>
@@ -91,7 +91,7 @@
           </div>
 
         </div>
-        <button class="addPerson" @click="addCard">Добавить персонажа </button>
+        <button class="addPerson" v-if="addButton" @click="addCard">Добавить персонажа </button>
       </section>
 
 
@@ -106,20 +106,23 @@ import axios from 'axios';
 
 export default {
 
+  props:['posts'],
+
   data(){
     return {
       cards:[],
       filteredCards:null,
-
       results:[],
       loading:true,
-
-      page:1
+      page:1,
+      // filterInput: null,
+      sortInput: 'all',
+      addButton: true,
     }
   },
 
   async mounted(){
-    this.getDataFromApi();
+    await this.getDataFromApi();
   },
 
   methods: {
@@ -130,34 +133,41 @@ export default {
 
       let response = await axios.get('https://rickandmortyapi.com/api/character/?page=' + this.page);
       this.results = response.data.results;
-      if(this.page===1){
+      if(this.page === 1 ){
         this.addCard();
       }
       this.loading = false;
+      this.filter(null)
+      this.sorting(null)
     },
 
     filter(value){
-      if(!value){
+
+      if( !value ){
         return this.filteredCards = null;
       }
+      else {
+        this.filteredCards = this.cards.filter(({gender})=>gender === value);
+      }
 
-      this.filteredCards = this.cards.filter(({gender})=>gender === value)
+      // if ( this.sortInput === 'alphabetic' ) {
+      //   this.sorting('alphabetic')
+      // }
+
     },
 
     sorting(value){
-      if(!value){
+
+      if ( !value ) {
         return this.filteredCards = null;
       }
 
-      if(value === 'alphabetic') {
-        this.filteredCards = [...(this.filteredCads || this.cards)].sort((a,b)=>{
+      if ( value === 'alphabetic' ) {
+        this.filteredCards = [...(this.filteredCards || this.cards)].sort((a,b)=>{
           return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
         })
       }
-
-
     },
-
 
     deleteObject: function(index) {
       this.$delete(this.cards, index);
@@ -174,6 +184,7 @@ export default {
       if(this.results.length === 0){
         this.page++;
         this.getDataFromApi();
+        this.filter(null)
       }
     }
 
