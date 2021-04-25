@@ -9,17 +9,17 @@
         <p class="title">Фильтр:</p>
 
         <div class="grid">
-          <label for="all" @click="filter(null)">
+          <label for="all" @click="filter = null">
             <input type="radio" value="value1" name="group2" id="all" checked>
             <p>All</p>
           </label>
 
-          <label for="male" @click="filter('Male')">
+          <label for="male" @click="filter = 'Male'">
             <input type="radio" value="value2" name="group2" id="male">
             <p>Only Male</p>
           </label>
 
-          <label for="female" @click="filter('Female')">
+          <label for="female" @click="filter = 'Female'">
             <input type="radio" value="value1" name="group2" id="female">
             <p>Only Female</p>
           </label>
@@ -32,12 +32,12 @@
         <p class="title">Сортировка:</p>
 
         <div class="grid">
-          <label for="null-sort" @click="sorting(null)">
+          <label for="null-sort" @click="sort = null">
             <input type="radio" value="value1" name="group2" id="null-sort" checked>
-            <p>All</p>
+            <p>Default</p>
           </label>
 
-          <label for="alphabetic" @click="sorting('alphabetic')">
+          <label for="alphabetic" @click="sort ='alphabetic'">
             <input type="radio" value="value2" name="group2" id="alphabetic">
             <p>Alphabetic</p>
           </label>
@@ -55,7 +55,7 @@
     <div class="grid-character">
 
       <section>
-        <div class="item" v-for="(card, index) in filteredCards || cards" :key="index">
+        <div class="item" v-for="(card, index) in listItems" :key="index">
 
           <div class="photoCharacter" :style="{'background-image': 'url(' + card.image + ')'}"></div>
 
@@ -64,8 +64,8 @@
             <p class="idCharacter">id - {{ card.id }}</p>
 
             <div class="itemInfo_character">
-              <a href="/card-person" class="nameCharacter">{{ card.name }}</a>
-              <p class="aliveCharacter">Alive - {{ card.status }}</p>
+              <router-link :to="{name:'CardPerson', params:{id:card.id}}" class="nameCharacter">{{ card.name }}</router-link>
+              <div class="aliveCharacter"><div :class="card.status" class="circleColorAlive"></div> Alive - {{ card.status }}</div>
             </div>
 
             <div class="itemInfo_character">
@@ -86,12 +86,12 @@
           </div>
 
           <div class="action-block">
-            <a href="/card-person" class="edit" @click="edit(card)">Редактировать</a>
+            <router-link :to="{name:'CardPerson', params:{id:card.id}}" class="edit">Редактировать</router-link>
             <p class="remove" @click="deleteObject(index)">Удалить</p>
           </div>
 
         </div>
-        <button class="addPerson" @click="addCard">Добавить персонажа </button>
+        <button class="addPerson" @click="addCard"><img src="@/assets/image/icon-rm.png" alt="">Добавить персонажа </button>
       </section>
 
 
@@ -102,20 +102,39 @@
 
 <script>
 
-import axios from 'axios';
+import { mapState } from 'vuex';
 
 export default {
 
   data(){
     return {
-      cards:[],
-      filteredCards:null,
-
-      results:[],
+      filter:null,
+      sort:null,
       loading:true,
-
       page:1
     }
+  },
+
+
+  computed:{
+    ...mapState(['results','cards']),
+    listItems(){
+
+      let cards = [...this.cards];
+
+      if(this.filter){
+        cards = cards.filter(({gender})=>gender === this.filter)
+      }
+
+      if(this.sort === 'alphabetic') {
+        cards.sort((a,b)=>{
+          return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+        })
+      }
+
+      return cards
+
+    } ,
   },
 
   async mounted(){
@@ -123,51 +142,20 @@ export default {
   },
 
   methods: {
+    cards: [],
     async getDataFromApi(){
       this.loading = true;
-
-      await new Promise(v=>setTimeout(v,1000));
-
-      let response = await axios.get('https://rickandmortyapi.com/api/character/?page=' + this.page);
-      this.results = response.data.results;
+      await this.$store.dispatch('getPage', this.page);
       if(this.page===1){
         this.addCard();
       }
       this.loading = false;
     },
 
-    filter(value){
-      if(!value){
-        return this.filteredCards = null;
-      }
-
-      this.filteredCards = this.cards.filter(({gender})=>gender === value)
-    },
-
-    sorting(value){
-      if(!value){
-        return this.filteredCards = null;
-      }
-
-      if(value === 'alphabetic') {
-        this.filteredCards = [...(this.filteredCads || this.cards)].sort((a,b)=>{
-          return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
-        })
-      }
-
-
-    },
-
 
     deleteObject: function(index) {
       this.$delete(this.cards, index);
     },
-
-    edit(card){
-      console.log(card);
-      card.gender = 'Олое!!!'
-    },
-
 
     addCard(){
       this.cards.push(this.results.shift());
@@ -275,6 +263,16 @@ export default {
   cursor: pointer;
 }
 
+.addPerson:hover {
+  background-color: #3C3E44;
+}
+
+.addPerson img {
+  width: 50px;
+  height: auto;
+  margin-right: 30px;
+}
+
 .addPerson:active {
   background-color: rgba(255, 255, 255, 0.1);
 }
@@ -337,6 +335,7 @@ export default {
   text-align: center;
   font-weight: bold;
   border-bottom: 2px solid transparent;
+  cursor: pointer;
 }
 
 .action-block .remove {
@@ -396,13 +395,25 @@ export default {
 }
 
 .aliveCharacter {
-
+  display: flex;
+  align-items: center;
 }
-.locationCharacter {
 
+.circleColorAlive {
+  width: 8px;
+  height: 8px;
+  border-radius: 50px;
+  margin-right: 10px;
 }
-.FirstSeenCharacter {
 
+.circleColorAlive.Alive {
+  background-color: #23DB54;
+}
+.circleColorAlive.Dead {
+  background-color: red;
+}
+.circleColorAlive.unknown {
+  background-color: orange;
 }
 
 </style>

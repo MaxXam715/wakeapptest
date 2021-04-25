@@ -1,55 +1,55 @@
 <template>
 <div class="person">
 
-  <a href="/" class="back-link">← назад к списку</a>
+  <router-link :to="{name:'Index'}" class="back-link">← назад к списку</router-link>
 
   <p class="titlePage">Редактировать персонажа</p>
   
-  <div class="card-item">
+  <div v-if="inStore" class="card-item">
 
-    <img class="img-person" src="https://rickandmortyapi.com/api/character/avatar/1.jpeg" alt="">
+    <img v-if="image" class="img-person" :src="image" alt="">
 
     <div class="info-edit">
 
       <div class="block-label">
         <p class="title">Name</p>
-        <input type="text" placeholder="input..." value="Rick Sanchez" class="input">
+        <input type="text" v-model="name" placeholder="input..." value="Rick Sanchez" class="input">
       </div>
 
       <div class="block-label">
         <p class="title">Alive</p>
-        <select name="" id="" class="select">
+        <select v-model="status" class="select">
           <option value="">none</option>
-          <option value="">Alive</option>
-          <option value="">Dead</option>
+          <option value="Alive">Alive</option>
+          <option value="Dead">Dead</option>
         </select>
       </div>
 
       <div class="block-label">
         <p class="title">Gender</p>
-        <select name="" id="" class="select">
+        <select v-model="gender"  class="select">
           <option value="">none</option>
-          <option value="">Male</option>
-          <option value="">Female</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
         </select>
       </div>
 
 
       <div class="block-label">
         <p class="title">Species</p>
-        <select name="" id="" class="select">
+        <select v-model="species"  class="select">
           <option value="">none</option>
-          <option value="">Human</option>
-          <option value="">Alien</option>
+          <option value="Human">Human</option>
+          <option value="Alien">Alien</option>
         </select>
       </div>
 
       <div class="block-label">
         <p class="title">Last known location</p>
-        <input type="text" placeholder="input..." value="Earth (Replacement Dimension)" class="input">
+        <input v-model="location.name" placeholder="input..." value="Earth (Replacement Dimension)" class="input">
       </div>
 
-      <button class="btn-save-edit">Сохранить изменения</button>
+      <button class="btn-save-edit" @click="saveChanges">Сохранить изменения</button>
 
     </div>
     
@@ -60,7 +60,68 @@
 
 <script>
 export default {
-name: "CardPerson"
+name: "CardPerson",
+
+  data(){
+    return {
+      inStore:false,
+      name:'',
+      image:'',
+      status:'',
+      gender:'',
+      species:'',
+      location:'',
+    }
+  },
+
+  watch:{
+    '$route.params.id'(id){
+      this.getData(id)
+    }
+  },
+
+  mounted() {
+    this.getData(this.$route.params.id)
+  },
+
+
+  methods:{
+
+    getData(id){
+      let founded =  this.$store.state.cards.find(item=>item.id === id);
+
+      this.inStore = !!founded;
+
+      if(!this.inStore){
+        this.$router.push({name:"Index"})
+      }
+
+      console.log(111, founded)
+
+      let storeData = {...founded};
+
+      this.name = storeData.name;
+      this.image = storeData.image;
+      this.status = storeData.status;
+      this.gender = storeData.gender;
+      this.species = storeData.species;
+      this.location = storeData.location;
+    },
+
+
+    saveChanges(){
+      let card = this.$store.state.cards.find(item=>item.id === this.$route.params.id);
+
+      card.name = this.name;
+      card.image = this.image;
+      card.status = this.status;
+      card.gender = this.gender;
+      card.species = this.species;
+      card.location = this.location;
+
+      this.$router.push({name:"Index"})
+    }
+  }
 }
 </script>
 

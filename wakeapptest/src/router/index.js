@@ -12,8 +12,10 @@ const routes = [
     component:()=>import(/* webpackChunkName: "home" */ '../views/index.vue')
   },
   {
-    path: '/card-person',
+    path: '/character/:id',
     name: 'CardPerson',
+    props: {id: 0},
+
     meta: {title: 'Редактировать карточку персонажа'},
 
     component:()=>import(/* webpackChunkName: "catalog" */ '../views/CardPerson.vue')
